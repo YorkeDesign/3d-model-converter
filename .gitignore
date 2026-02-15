@@ -1,0 +1,14 @@
+# OS files
+Thumbs.db
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Claude Code
+.claude/
+
+# Misc
+nul

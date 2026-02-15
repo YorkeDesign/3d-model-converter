@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USDZ to GLB Converter</title>
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!--
+        Three.js imports via CDN (using importmap so we can use ES module imports).
+        - three:           Core Three.js library (scene, camera, renderer, etc.)
+        - three/addons:    Official add-ons like loaders, controls, and exporters
+
+        We use the Three.js `dev` branch because it contains the new USDLoader
+        with a pure-JavaScript USDC (binary Crate) parser (PR #32704, merged
+        Jan 2026, targeting the r183 release).  The stable r162 USDZLoader only
+        supported USDA (ASCII) files, which most real-world USDZ files don't use.
+    -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+
+    <!-- ========== HEADER ========== -->
+    <header class="app-header">
+        <h1>USDZ &rarr; GLB / USDZ Converter</h1>
+        <p class="subtitle">Upload a USDZ file, preview &amp; adjust orientation, then export as GLB or USDZ &mdash; all in your browser.</p>
+    </header>
+
+    <main class="app-main">
+
+        <!-- ========== FILE UPLOAD AREA ========== -->
+        <section class="upload-section">
+            <!--
+                The drop zone supports both drag-and-drop AND click-to-browse.
+                A hidden <input type="file"> is triggered when the zone is clicked.
+            -->
+            <!--
+                Hidden file input lives OUTSIDE the drop zone so that
+                programmatic .click() doesn't bubble back into the
+                dropZone click handler and create an infinite loop.
+            -->
+            <input type="file" id="fileInput" accept=".usdz" hidden>
+
+            <div id="dropZone" class="drop-zone">
+                <div class="drop-zone-content">
+                    <svg class="upload-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p class="drop-text">Drag &amp; drop a <strong>.usdz</strong> file here</p>
+                    <p class="drop-subtext">or click to browse</p>
+                </div>
+            </div>
+
+            <!-- File name display (shown after a file is loaded) -->
+            <div id="fileInfo" class="file-info hidden">
+                <span id="fileName" class="file-name"></span>
+                <button id="clearFileBtn" class="btn-clear" title="Remove file">&times;</button>
+            </div>
+        </section>
+
+        <!-- ========== STATUS / ERROR MESSAGES ========== -->
+        <div id="statusBar" class="status-bar hidden">
+            <span id="statusMessage"></span>
+        </div>
+
+        <!-- ========== 3D PREVIEW ========== -->
+        <section class="preview-section">
+            <!--
+                The Three.js renderer canvas will be inserted inside this container.
+                It is also where the loading spinner overlay appears.
+            -->
+            <div id="previewContainer" class="preview-container">
+                <!-- Placeholder shown when no model is loaded -->
+                <div id="previewPlaceholder" class="preview-placeholder">
+                    <p>3D Preview</p>
+                    <p class="placeholder-sub">Upload a USDZ file to see it here</p>
+                </div>
+
+                <!-- Loading spinner overlay (hidden by default) -->
+                <div id="loadingOverlay" class="loading-overlay hidden">
+                    <div class="spinner"></div>
+                    <p>Loading model&hellip;</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== TRANSFORM CONTROLS ========== -->
+        <section id="controlsSection" class="controls-section hidden">
+
+            <!-- --- Viewport legend --- -->
+            <div class="viewport-legend">
+                <span class="legend-item"><span class="legend-swatch legend-model"></span> Textured model = exported GLB orientation</span>
+                <span class="legend-item"><span class="legend-swatch legend-ghost"></span> Purple wireframe = original USDZ orientation</span>
+                <span class="legend-item"><span class="legend-swatch legend-grid"></span> Grid &amp; axes = world origin (0,0,0) &mdash; Y is up</span>
+            </div>
+
+            <hr class="controls-divider">
+
+            <!-- --- Rotation --- -->
+            <h2 class="controls-heading">Rotation</h2>
+            <p class="controls-hint">Adjust the sliders to rotate the model. The purple wireframe shows where it started. Use your mouse to orbit the camera.</p>
+
+            <div class="sliders-grid">
+                <div class="slider-group">
+                    <label for="rotX" class="axis-x">X Axis</label>
+                    <button class="btn-nudge" data-axis="rotX" data-dir="-1">&#9664;</button>
+                    <input type="range" id="rotX" min="0" max="360" value="0" step="1">
+                    <button class="btn-nudge" data-axis="rotX" data-dir="1">&#9654;</button>
+                    <input type="number" id="rotXNum" class="rot-number" min="0" max="360" value="0" step="1">
+                    <span class="rot-unit">&deg;</span>
+                </div>
+                <div class="slider-group">
+                    <label for="rotY" class="axis-y">Y Axis</label>
+                    <button class="btn-nudge" data-axis="rotY" data-dir="-1">&#9664;</button>
+                    <input type="range" id="rotY" min="0" max="360" value="0" step="1">
+                    <button class="btn-nudge" data-axis="rotY" data-dir="1">&#9654;</button>
+                    <input type="number" id="rotYNum" class="rot-number" min="0" max="360" value="0" step="1">
+                    <span class="rot-unit">&deg;</span>
+                </div>
+                <div class="slider-group">
+                    <label for="rotZ" class="axis-z">Z Axis</label>
+                    <button class="btn-nudge" data-axis="rotZ" data-dir="-1">&#9664;</button>
+                    <input type="range" id="rotZ" min="0" max="360" value="0" step="1">
+                    <button class="btn-nudge" data-axis="rotZ" data-dir="1">&#9654;</button>
+                    <input type="number" id="rotZNum" class="rot-number" min="0" max="360" value="0" step="1">
+                    <span class="rot-unit">&deg;</span>
+                </div>
+            </div>
+
+            <hr class="controls-divider">
+
+            <!-- --- Position Offset --- -->
+            <h2 class="controls-heading">Position</h2>
+            <p class="controls-hint">
+                Move the model relative to the world origin (where the grid and
+                <span class="axis-x">X</span> <span class="axis-y">Y</span>
+                <span class="axis-z">Z</span> axes meet).
+                Rotation always happens around the origin.
+                Positive <span class="axis-y">Y</span> = up.
+            </p>
+
+            <div class="pivot-grid">
+                <div class="pivot-input-group">
+                    <label for="pivotX" class="axis-x">X</label>
+                    <input type="number" id="pivotX" value="0" step="0.01">
+                </div>
+                <div class="pivot-input-group">
+                    <label for="pivotY" class="axis-y">Y</label>
+                    <input type="number" id="pivotY" value="0" step="0.01">
+                </div>
+                <div class="pivot-input-group">
+                    <label for="pivotZ" class="axis-z">Z</label>
+                    <input type="number" id="pivotZ" value="0" step="0.01">
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="button-group">
+                <button id="resetBtn" class="btn btn-secondary">Reset All</button>
+                <button id="centerPivotBtn" class="btn btn-secondary">Center Position</button>
+            </div>
+
+            <hr class="controls-divider">
+
+            <!-- --- Export --- -->
+            <h2 class="controls-heading">Export</h2>
+            <div class="button-group" style="margin-bottom: var(--space-lg);">
+                <button id="convertBtn" class="btn btn-primary">Download GLB</button>
+                <button id="convertUsdzBtn" class="btn btn-primary btn-usdz">Download USDZ</button>
+            </div>
+
+            <!-- --- Export info --- -->
+            <div class="export-info">
+                <h3 class="export-info-heading">What happens during export</h3>
+                <ul class="export-info-list">
+                    <li><strong>Transforms are baked</strong> &mdash; all rotation, position and scale changes are
+                        applied directly into the mesh vertex data. The exported file contains identity transforms
+                        on every node, ensuring consistent orientation across all viewers including Android Scene Viewer.</li>
+                    <li><strong>Geometry is optimised</strong> &mdash; duplicate vertices are merged and an index
+                        buffer is created, reducing file size by up to 80% compared to the raw parsed data.</li>
+                    <li><strong>Colours are preserved</strong> &mdash; per-vertex colours from the original USDZ are
+                        carried through to the export. They are quantised to 8-bit (visually lossless) for smaller files.</li>
+                    <li><strong>Normals are recomputed</strong> &mdash; smooth vertex normals are recalculated after
+                        optimisation to ensure correct lighting.</li>
+                    <li><strong>Original scale preserved</strong> &mdash; the preview viewport normalises the model to fit
+                        the viewer, but exports restore the original native scale and position from the source file.</li>
+                    <li><strong>Coordinate system</strong> &mdash; both USDZ and GLB use right-handed, Y-up coordinates.
+                        No axis conversion is needed.</li>
+                    <li><strong>USDZ file size note</strong> &mdash; exported USDZ files will be larger than the original
+                        because Three.js writes USDA (ASCII text) format, not binary USDC. Expect ~2&ndash;5&times;
+                        size increase. GLB exports use compact binary encoding and will be closer to the original size.</li>
+                    <li><strong>All processing is local</strong> &mdash; nothing is uploaded. Your files never leave your browser.</li>
+                </ul>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="app-footer">
+        <p>Built with <a href="https://threejs.org" target="_blank" rel="noopener">Three.js</a> &mdash; all processing happens locally in your browser.</p>
+    </footer>
+
+    <!-- Main application script (ES module) -->
+    <script type="module" src="js/converter.js"></script>
+
+</body>
+</html>
