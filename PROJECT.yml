@@ -1,0 +1,76 @@
+# PROJECT.yml - how this project tells Harvestry what it is.
+#
+# Harvestry syncs this file from GitHub daily (05:30 UTC) and feeds it to the
+# project alignment agent, the relevance gate and the Curator. Without it, the
+# vault scores this project against a paragraph generated from the README -
+# which describes only the code, so every project reads as a software project.
+#
+# Template + field reference: ~/.claude/templates/PROJECT.yml
+# To author or review this file properly: run /write-project-profile
+
+
+name: 3d-model-converter
+harvestry_project: 3d-model-converter
+stage: beta
+
+# What this project IS. Decides whether physical signal is core or a tangent.
+nature:
+  - "web"
+  - "software"
+
+mission: >
+  Browser-local USDZ and GLB converter and preview tool built on Three.js:
+  drag-and-drop upload, real-time 3D preview, per-axis rotation and position
+  controls, transform baking, and optimised export with vertex deduplication.
+  Runs entirely client-side, with no uploads.
+
+# Categories this project is actively hunting. A high interest scores 7+.
+signal_interests:
+  - label: "glTF, GLB and USDZ format details, tooling and converters"
+    weight: high
+  - label: "Three.js rendering and geometry utilities"
+    weight: high
+  - label: "Client-side 3D processing: WASM, mesh optimisation, compression"
+    weight: high
+  - label: "AR asset requirements for iOS Quick Look and Android Scene Viewer"
+    weight: high
+  - label: "Draco, Meshopt and texture compression"
+    weight: medium
+  - label: "Browser file handling for large binary assets"
+    weight: medium
+
+# ---------------------------------------------------------------------------
+# open_decisions - NOT YET FILLED IN. This is the highest-value field.
+# ---------------------------------------------------------------------------
+# An item that informs a live decision scores 8+; nothing else in this file
+# comes close. It is deliberately empty rather than guessed.
+#
+# It was left out because a first pass on another project drafted this field
+# from its README and TASKS.md and got THREE OF FOUR DECISIONS WRONG - the docs
+# lagged reality by hours, which is the normal state during active work, not an
+# aberration. Only a session actually working this project knows what is open.
+#
+# Fill it in at the next real working session (run /write-project-profile), and
+# from then on move it in the SAME COMMIT as the decision. When you CLOSE one,
+# do not delete it: set `status: closed` and add `rests_on` naming the facts the
+# closure depends on, with numbers. A closure is a claim resting on facts, and
+# facts move.
+#
+# open_decisions:
+#   - id: example
+#     question: Which X should we use?
+#     status: open          # open | imminent | blocked | closing | closed
+#     notes: >
+#       What has been ruled out, on what grounds, and what would reopen it.
+
+# Explicit negatives. Scored 0-2 however well they otherwise match.
+not_interested:
+  - "3D modelling tutorials"
+  - "Cloud asset conversion services"
+
+keywords:
+  - "usdz"
+  - "glb"
+  - "gltf"
+  - "threejs"
+  - "quicklook"
