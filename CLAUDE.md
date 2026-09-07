@@ -1,5 +1,7 @@
 # USDZ to GLB / USDZ Converter
 
+Harvest approval: gated
+
 A browser-based 3D model converter that loads USDZ files, provides a real-time 3D preview with orientation/position controls, and exports to GLB or USDZ format. All processing happens client-side — no server, no uploads.
 
 ## Project Structure
@@ -264,3 +266,7 @@ shared fleet and one wallet across the whole portfolio. Two living docs:
 - Out of scope: **BOM hardware** for hardware-design projects (motors, boards,
   electronics) is project BOM, not fleet. **Fiso-provided** hardware and
   services are excluded entirely.
+
+## Harvest ingest (portfolio standard, 2026-09-07)
+
+`Harvest approval:` at the top of this file governs Harvestry-sourced changes (`gated`: proposals wait for Simon to set `status: approved`; `autonomous`: this project implements them itself, one per run). The daily `daily-harvest-ingest` task runs the global `harvest-ingest` skill here: it works this project's Harvestry queue, records every verdict in the vault and in `docs/harvest/YYYY-MM-DD-harvest.md`, and writes an implementation proposal per adoptable capture into `docs/harvest/proposals/`. `TASKS.md` carries "Harvest proposals awaiting approval: N" and sessions say that number at start. Procedure: `~/.claude/skills/harvest-ingest/SKILL.md`.

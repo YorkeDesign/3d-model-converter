@@ -1,0 +1,6 @@
+# .doc-health - template with every key explained: ~/.claude/templates/doc-health
+# Grace declared during the 2026-09-07 portfolio rollout of the doc-health gate: the debt
+# below was measured by ~/.claude/scripts/doc-health.sh and is to be paid by the next working
+# session in this repo via /doc-health. The daily sweep reports it until then. Not an exemption.
+GRACE_UNTIL=2026-10-07
+GRACE_REASON="doc-health rollout 2026-09-07: pay via /doc-health in the next working session"
