@@ -1,6 +1,6 @@
 # .doc-health - template with every key explained: ~/.claude/templates/doc-health
-# Grace declared during the 2026-09-07 portfolio rollout of the doc-health gate: the debt
-# below was measured by ~/.claude/scripts/doc-health.sh and is to be paid by the next working
-# session in this repo via /doc-health. The daily sweep reports it until then. Not an exemption.
+# Grace declared 2026-09-07 on rollout and re-dated 2026-09-13: eighteen repos shared one expiry,
+# which is a silent exemption for a day, not a grace. This reason names THIS repo's debt.
+# Pay it via /doc-health in the next working session here. Not an exemption.
 GRACE_UNTIL=2026-10-07
-GRACE_REASON="doc-health rollout 2026-09-07: pay via /doc-health in the next working session"
+GRACE_REASON="3d-model-converter: CLAUDE.md is 272 lines (rule ~200, gate 240). Pay via /doc-health in the next working session here; re-dated 2026-09-13 from the shared 2026-10-07 cliff."
