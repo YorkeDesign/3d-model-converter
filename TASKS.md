@@ -4,7 +4,7 @@ Active board. Shipped waves move to `docs/plans/archived/`.
 
 ## Inbox
 
-- Harvest proposals awaiting approval: 2, approved but not implemented: 0 (docs/harvest/proposals/)
+- Harvest proposals awaiting approval: 3, approved but not implemented: 0 (docs/harvest/proposals/)
 
 ## In progress
 
