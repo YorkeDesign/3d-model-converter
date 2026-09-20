@@ -39,29 +39,64 @@ signal_interests:
   - label: "Browser file handling for large binary assets"
     weight: medium
 
-# ---------------------------------------------------------------------------
-# open_decisions - NOT YET FILLED IN. This is the highest-value field.
-# ---------------------------------------------------------------------------
-# An item that informs a live decision scores 8+; nothing else in this file
-# comes close. It is deliberately empty rather than guessed.
-#
-# It was left out because a first pass on another project drafted this field
-# from its README and TASKS.md and got THREE OF FOUR DECISIONS WRONG - the docs
-# lagged reality by hours, which is the normal state during active work, not an
-# aberration. Only a session actually working this project knows what is open.
-#
-# Fill it in at the next real working session (run /write-project-profile), and
-# from then on move it in the SAME COMMIT as the decision. When you CLOSE one,
-# do not delete it: set `status: closed` and add `rests_on` naming the facts the
-# closure depends on, with numbers. A closure is a claim resting on facts, and
-# facts move.
-#
-# open_decisions:
-#   - id: example
-#     question: Which X should we use?
-#     status: open          # open | imminent | blocked | closing | closed
-#     notes: >
-#       What has been ruled out, on what grounds, and what would reopen it.
+# Live questions the OUTSIDE WORLD could help answer. An item that informs one
+# scores 8+. Move these in the SAME COMMIT as the decision; when one closes, set
+# `status: closed` and add `rests_on` naming the facts it depends on, rather
+# than deleting it.
+open_decisions:
+  - id: threejs-dev-branch-pin
+    question: >
+      Can this tool move off the Three.js dev branch onto a tagged release yet,
+      or does USDZ loading still depend on unreleased USDLoader work?
+    status: open
+    notes: >
+      The CDN pins mrdoob/three.js@dev because the USDLoader rewrite and its
+      pure-JavaScript USDC binary Crate parser landed in PR #32704 targeting
+      r183; stable Three.js reads only USDA, which most real-world USDZ files
+      are not. A dev pin means an upstream commit can break loading with no
+      warning. A release announcement naming USDLoader or USDC, a changelog
+      entry, or a regression report against r183+ moves this. An r186
+      announcement is already sitting unassessed in this project's queue.
+
+  - id: usdc-binary-export
+    question: >
+      Is there a browser-viable way to write binary USDC, or is the 2-5x size
+      bloat on every exported USDZ permanent?
+    status: open
+    notes: >
+      Three.js USDZExporter emits USDA ASCII (~8-10 bytes per float against 4
+      binary) and the USDZ spec mandates zero ZIP compression, so exported USDZ
+      runs 2-5x the size of the input while GLB stays near parity. Hand-writing
+      a USDC encoder was judged out of scope. A WASM build of OpenUSD small
+      enough to load in a page, a JavaScript Crate writer, or a USDZExporter
+      change upstream reopens it.
+
+  - id: mesh-compression-stage
+    question: >
+      Should GLB export add a Draco or Meshopt stage, and do compressed meshes
+      still open in iOS Quick Look and Android Scene Viewer?
+    status: open
+    notes: >
+      mergeVertices is currently the only size reduction (~80% vertex cut, 26 MB
+      down to 5.4 MB on the reference model). Three.js GLTFExporter cannot emit
+      Draco or Meshopt; gltf-transform could, but would be this project's first
+      runtime dependency beyond Three.js, so it is proposed behind a default-off
+      checkbox. Viewer compatibility is what decides it: a support matrix, a
+      Quick Look or Scene Viewer release note, or a real compression-ratio
+      benchmark on scanned meshes moves this.
+
+  - id: usdz-texture-fidelity
+    question: >
+      Does USDLoader carry USDZ textures through to GLB export reliably, or is a
+      custom archive-extraction path still required?
+    status: open
+    notes: >
+      An early manual path (extractImagesFromUSDZ, scanForEmbeddedImages,
+      applyFallbackTextures) was abandoned as legacy once the displayColor
+      monkey-patch landed, but textures remain a known silent-drop hazard on
+      export and per-vertex colour is the only channel actually verified
+      end-to-end. An upstream USDLoader texture fix, a reproducible issue, or
+      another browser USDZ implementation that handles it moves this.
 
 # Explicit negatives. Scored 0-2 however well they otherwise match.
 not_interested:
